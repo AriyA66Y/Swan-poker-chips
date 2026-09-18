@@ -1,0 +1,39 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Outer Chip Body -->
+    <path
+        android:fillColor="#E5B83B"
+        android:pathData="M54,24 A30,30 0 1,1 53.99,24 Z" />
+    
+    <!-- Chip Inset Ring -->
+    <path
+        android:fillColor="#1B6338"
+        android:pathData="M54,27 A27,27 0 1,1 53.99,27 Z" />
+        
+    <!-- Chip Edge Stripes -->
+    <path
+        android:fillColor="#FCEFC7"
+        android:pathData="M51,24 h6 v6 h-6 z M51,78 h6 v6 h-6 z M24,51 h6 v6 h-6 z M78,51 h6 v6 h-6 z M33,33 h4 v5 h-4 z M71,33 h4 v5 h-4 z M33,70 h4 v5 h-4 z M71,70 h4 v5 h-4 z" />
+
+    <!-- Inner Golden Ring -->
+    <path
+        android:fillColor="#E5B83B"
+        android:pathData="M54,34 A20,20 0 1,1 53.99,34 Z" />
+        
+    <!-- Center Core Disc -->
+    <path
+        android:fillColor="#0D3B20"
+        android:pathData="M54,37 A17,17 0 1,1 53.99,37 Z" />
+
+    <!-- Center Spade Symbol & $ sign -->
+    <path
+        android:fillColor="#F6D065"
+        android:pathData="M54,43 C51,46 47,48 47,52 C47,55 49.5,57 52.5,57 C53.5,57 54,56.5 54,56.5 C54,56.5 54.5,57 55.5,57 C58.5,57 61,55 61,52 C61,48 57,46 54,43 Z" />
+    <path
+        android:fillColor="#F6D065"
+        android:pathData="M53,56 h2 v5 h-2 z" />
+</vector>
+

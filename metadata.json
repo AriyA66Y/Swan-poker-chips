@@ -1,0 +1,7 @@
+{
+  "name": "Poker Chip Counter",
+  "description": "Professional poker chip counter and scorekeeper with automated pot calculation, side pots, player betting turns, and profit-loss charts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
