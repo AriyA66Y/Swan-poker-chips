@@ -1,9 +1,12 @@
-name: Build Android APK
+name: Build and Release APK
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -35,8 +38,14 @@ jobs:
             gradle assembleDebug
           fi
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          tag_name: "v1.0.${{ github.run_number }}"
+          name: "Build #${{ github.run_number }}"
+          body: "خروجی خودکار فایل APK نسخه دیباگ"
+          draft: false
+          prerelease: false
+          files: app/build/outputs/apk/debug/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
