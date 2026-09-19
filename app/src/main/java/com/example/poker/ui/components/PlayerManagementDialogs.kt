@@ -555,7 +555,10 @@ fun SettingsDialog(
                             .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (selectedLanguage == "fa") GoldPrimary else Color.Transparent)
-                            .clickable { selectedLanguage = "fa" }
+                            .clickable {
+                                selectedLanguage = "fa"
+                                currencyName = "چیپ"
+                            }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -572,7 +575,10 @@ fun SettingsDialog(
                             .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (selectedLanguage == "en") GoldPrimary else Color.Transparent)
-                            .clickable { selectedLanguage = "en" }
+                            .clickable {
+                                selectedLanguage = "en"
+                                currencyName = "chip"
+                            }
                             .padding(vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -656,13 +662,13 @@ fun SettingsDialog(
                                 val sb = sbText.toLongOrNull() ?: settings.smallBlind
                                 val bb = bbText.toLongOrNull() ?: settings.bigBlind
                                 val ante = anteText.toLongOrNull() ?: settings.ante
-                                val defaultCur = if (selectedLanguage == "en") "Chips" else "چیپ"
+                                val defaultCur = if (selectedLanguage == "en") "chip" else "چیپ"
                                 onSave(
                                     settings.copy(
                                         smallBlind = sb,
                                         bigBlind = bb,
                                         ante = ante,
-                                        currencyName = currencyName.ifEmpty { defaultCur },
+                                        currencyName = currencyName.ifBlank { defaultCur },
                                         language = selectedLanguage
                                     )
                                 )

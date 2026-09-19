@@ -1,6 +1,7 @@
 package com.example.poker.viewmodel
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.poker.data.GameRepository
@@ -43,7 +44,8 @@ data class PokerUiState(
     val settings: GameSettings = GameSettings(),
     val isShowdownModalOpen: Boolean = false,
     val isAutoHandOver: Boolean = false,
-    val lastHandSummary: String? = null
+    val lastHandSummary: String? = null,
+    val isFirstLaunchLanguagePromptPending: Boolean = false
 )
 
 class PokerViewModel(
@@ -59,6 +61,9 @@ class PokerViewModel(
     private val _uiState = MutableStateFlow(PokerUiState())
     val uiState: StateFlow<PokerUiState> = _uiState.asStateFlow()
 
+    private val prefs = application.getSharedPreferences("poker_app_prefs", Context.MODE_PRIVATE)
+    private val PREF_KEY_FIRST_RUN_LANG_DONE = "has_selected_initial_language_v1"
+
     val templates: StateFlow<List<GameTemplateEntity>> = repository.getAllTemplatesFlow()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -71,9 +76,12 @@ class PokerViewModel(
 
     init {
         viewModelScope.launch {
+            val hasSelectedLang = prefs.getBoolean(PREF_KEY_FIRST_RUN_LANG_DONE, false)
             val savedState = repository.loadCurrentGameState()
             if (savedState != null && savedState.players.isNotEmpty()) {
-                _uiState.value = savedState
+                _uiState.value = savedState.copy(
+                    isFirstLaunchLanguagePromptPending = !hasSelectedLang
+                )
             } else {
                 // Initialize with default standard players to make first launch instantly playable and exciting
                 val defaultColors = listOf(
@@ -93,7 +101,11 @@ class PokerViewModel(
                 val buyIns = initialPlayers.map {
                     BuyInRecord(playerId = it.id, playerName = it.name, amount = it.totalBuyIn, isInitial = true)
                 }
-                val initialState = _uiState.value.copy(players = initialPlayers, buyInRecords = buyIns)
+                val initialState = _uiState.value.copy(
+                    players = initialPlayers,
+                    buyInRecords = buyIns,
+                    isFirstLaunchLanguagePromptPending = !hasSelectedLang
+                )
                 _uiState.value = initialState
                 repository.saveCurrentGameState(initialState)
             }
@@ -193,13 +205,57 @@ class PokerViewModel(
     }
 
     fun updateSettings(newSettings: GameSettings) {
-        _uiState.update { it.copy(settings = newSettings) }
+        val currentLang = _uiState.value.settings.language
+        val finalCurrency = if (newSettings.language != currentLang) {
+            // When language changes, auto-set currency to "chip" for English and "چیپ" for Persian
+            if (newSettings.language == "en") "chip" else "چیپ"
+        } else {
+            if (newSettings.currencyName.isBlank()) {
+                if (newSettings.language == "en") "chip" else "چیپ"
+            } else {
+                newSettings.currencyName
+            }
+        }
+        _uiState.update { it.copy(settings = newSettings.copy(currencyName = finalCurrency)) }
     }
 
     fun setLanguage(lang: String) {
+        val currency = if (lang == "en") "chip" else "چیپ"
         _uiState.update { state ->
-            val updated = state.settings.copy(language = lang)
+            val updated = state.settings.copy(
+                language = lang,
+                currencyName = currency
+            )
             state.copy(settings = updated)
+        }
+    }
+
+    fun selectInitialLanguage(language: String) {
+        prefs.edit().putBoolean(PREF_KEY_FIRST_RUN_LANG_DONE, true).apply()
+        val currency = if (language == "en") "chip" else "چیپ"
+        _uiState.update { state ->
+            val updatedSettings = state.settings.copy(
+                language = language,
+                currencyName = currency
+            )
+            val updatedPlayers = if (language == "en") {
+                state.players.mapIndexed { idx, p ->
+                    if (p.name.startsWith("بازیکن")) {
+                        p.copy(name = if (idx == 0) "Player 1 (You)" else "Player ${idx + 1}")
+                    } else p
+                }
+            } else {
+                state.players.mapIndexed { idx, p ->
+                    if (p.name.startsWith("Player")) {
+                        p.copy(name = if (idx == 0) "بازیکن ۱ (شما)" else "بازیکن ${idx + 1}")
+                    } else p
+                }
+            }
+            state.copy(
+                settings = updatedSettings,
+                players = updatedPlayers,
+                isFirstLaunchLanguagePromptPending = false
+            )
         }
     }
 

@@ -22,19 +22,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -44,6 +49,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.poker.model.Player
@@ -73,9 +80,11 @@ fun BettingControls(
     onBetOrRaise: (Long) -> Unit,
     onAllIn: () -> Unit,
     modifier: Modifier = Modifier,
-    currencySymbol: String = "چیپ"
+    currencySymbol: String = "چیپ",
+    smallBlind: Long = 10L
 ) {
     val strings = LocalAppStrings.current
+    val effectiveSmallBlind = max(1L, smallBlind)
     val callDiff = max(0L, currentHighestBet - player.currentStreetBet)
     val canCheck = (callDiff == 0L)
     val actualCallAmount = min(callDiff, player.chips)
@@ -90,8 +99,11 @@ fun BettingControls(
     var isRaisePanelOpen by remember { mutableStateOf(false) }
 
     val safeMin = min(minBetOrRaiseTotal, maxBetTotal)
-    var sliderValue by remember(player.id, currentHighestBet) {
-        mutableFloatStateOf(safeMin.toFloat())
+    var currentTarget by remember(player.id, currentHighestBet, isRaisePanelOpen) {
+        mutableLongStateOf(safeMin)
+    }
+    var amountInputText by remember(player.id, currentHighestBet, isRaisePanelOpen) {
+        mutableStateOf(safeMin.toString())
     }
 
     val totalPotAmount = pots.sumOf { it.amount }
@@ -138,7 +150,7 @@ fun BettingControls(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Raise Slider & Quick Buttons panel
+        // Raise Slider, Keyboard Input & Quick Buttons panel
         AnimatedVisibility(
             visible = isRaisePanelOpen,
             enter = fadeIn() + expandVertically(),
@@ -153,7 +165,6 @@ fun BettingControls(
                     .border(1.dp, FeltBorder, RoundedCornerShape(12.dp))
                     .padding(10.dp)
             ) {
-                val currentTarget = sliderValue.roundToLong()
                 val addedAmount = max(0L, currentTarget - player.currentStreetBet)
 
                 Row(
@@ -174,10 +185,140 @@ fun BettingControls(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Exact Numeric Input Field with + and - buttons stepping by Small Blind
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Decrement by SB button (-)
+                    Button(
+                        onClick = {
+                            val nextVal = max(safeMin, currentTarget - effectiveSmallBlind)
+                            currentTarget = nextVal
+                            amountInputText = nextVal.toString()
+                        },
+                        enabled = currentTarget > safeMin,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("raise_minus_button"),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF232A34),
+                            contentColor = GoldLight,
+                            disabledContainerColor = Color(0xFF191F26),
+                            disabledContentColor = Color.Gray
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Remove,
+                            contentDescription = "Decrease by $effectiveSmallBlind",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    // Direct Numeric Keyboard Input
+                    OutlinedTextField(
+                        value = amountInputText,
+                        onValueChange = { inputStr ->
+                            val digits = inputStr.filter { it.isDigit() }
+                            amountInputText = digits
+                            val parsed = digits.toLongOrNull()
+                            if (parsed != null) {
+                                currentTarget = parsed.coerceIn(safeMin, maxBetTotal)
+                            }
+                        },
+                        label = { Text(strings.raiseInputLabel, fontSize = 11.sp) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        modifier = Modifier
+                            .weight(1f)
+                            .testTag("raise_amount_input"),
+                        textStyle = MaterialTheme.typography.titleMedium.copy(
+                            color = GoldLight,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        ),
+                        suffix = {
+                            Text(
+                                text = currencySymbol,
+                                color = GoldPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = GoldPrimary,
+                            unfocusedBorderColor = FeltBorder,
+                            focusedLabelColor = GoldLight,
+                            unfocusedLabelColor = Color.White.copy(alpha = 0.6f),
+                            cursorColor = GoldPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+
+                    // Increment by SB button (+)
+                    Button(
+                        onClick = {
+                            val nextVal = min(maxBetTotal, currentTarget + effectiveSmallBlind)
+                            currentTarget = nextVal
+                            amountInputText = nextVal.toString()
+                        },
+                        enabled = currentTarget < maxBetTotal,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .testTag("raise_plus_button"),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF232A34),
+                            contentColor = GoldLight,
+                            disabledContainerColor = Color(0xFF191F26),
+                            disabledContentColor = Color.Gray
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Increase by $effectiveSmallBlind",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+
+                // Small step and chip limits info
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = strings.stepSbInfo(effectiveSmallBlind, currencySymbol),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 10.sp
+                        )
+                    )
+                    Text(
+                        text = "${strings.chipsLabel}: ${formatNumber(currentTarget)} / ${formatNumber(maxBetTotal)}",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 10.sp
+                        )
+                    )
+                }
+
                 if (maxBetTotal > safeMin) {
                     Slider(
-                        value = sliderValue,
-                        onValueChange = { sliderValue = it },
+                        value = currentTarget.toFloat().coerceIn(safeMin.toFloat(), maxBetTotal.toFloat()),
+                        onValueChange = {
+                            val rounded = it.roundToLong()
+                            currentTarget = rounded
+                            amountInputText = rounded.toString()
+                        },
                         valueRange = safeMin.toFloat()..maxBetTotal.toFloat(),
                         colors = SliderDefaults.colors(
                             thumbColor = GoldPrimary,
@@ -196,34 +337,43 @@ fun BettingControls(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     QuickBetButton(text = strings.quickMin) {
-                        sliderValue = safeMin.toFloat()
+                        currentTarget = safeMin
+                        amountInputText = safeMin.toString()
                     }
                     QuickBetButton(text = strings.quick2x) {
                         val v = min(maxBetTotal, currentHighestBet + minRaise * 2)
-                        sliderValue = max(safeMin, v).toFloat()
+                        val clamped = max(safeMin, v)
+                        currentTarget = clamped
+                        amountInputText = clamped.toString()
                     }
                     if (totalPotAmount > 0) {
                         QuickBetButton(text = strings.quickHalfPot) {
                             val v = min(maxBetTotal, currentHighestBet + (totalPotAmount / 2))
-                            sliderValue = max(safeMin, v).toFloat()
+                            val clamped = max(safeMin, v)
+                            currentTarget = clamped
+                            amountInputText = clamped.toString()
                         }
                         QuickBetButton(text = strings.quickPot) {
                             val v = min(maxBetTotal, currentHighestBet + totalPotAmount)
-                            sliderValue = max(safeMin, v).toFloat()
+                            val clamped = max(safeMin, v)
+                            currentTarget = clamped
+                            amountInputText = clamped.toString()
                         }
                     }
                     QuickBetButton(text = strings.quickAllIn, isAllIn = true) {
-                        sliderValue = maxBetTotal.toFloat()
+                        currentTarget = maxBetTotal
+                        amountInputText = maxBetTotal.toString()
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Confirm Raise Button
                 Button(
                     onClick = {
                         isRaisePanelOpen = false
-                        onBetOrRaise(sliderValue.roundToLong())
+                        val finalBet = (amountInputText.toLongOrNull() ?: currentTarget).coerceIn(safeMin, maxBetTotal)
+                        onBetOrRaise(finalBet)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -234,8 +384,9 @@ fun BettingControls(
                 ) {
                     Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
+                    val previewBet = (amountInputText.toLongOrNull() ?: currentTarget).coerceIn(safeMin, maxBetTotal)
                     Text(
-                        text = strings.confirmRaise,
+                        text = "${strings.confirmRaise} (${formatNumber(previewBet)} $currencySymbol)",
                         color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp

@@ -238,6 +238,27 @@ fun TableScreen(
                     Spacer(modifier = Modifier.width(6.dp))
 
                     IconButton(
+                        onClick = {
+                            val targetLang = if (state.settings.language == "en") "fa" else "en"
+                            viewModel.setLanguage(targetLang)
+                        },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceElevated)
+                            .testTag("language_toggle_icon_button")
+                    ) {
+                        Text(
+                            text = if (state.settings.language == "en") "FA" else "EN",
+                            color = GoldLight,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    IconButton(
                         onClick = { showSettingsDialog = true },
                         modifier = Modifier
                             .size(36.dp)
@@ -423,7 +444,8 @@ fun TableScreen(
                     onCall = { viewModel.onCall() },
                     onBetOrRaise = { viewModel.onBetOrRaise(it) },
                     onAllIn = { viewModel.onAllIn() },
-                    currencySymbol = state.settings.currencyName
+                    currencySymbol = state.settings.currencyName,
+                    smallBlind = state.settings.smallBlind
                 )
             }
         }

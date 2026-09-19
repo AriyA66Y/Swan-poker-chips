@@ -228,6 +228,19 @@ interface AppStrings {
     val removePlayerConfirmTitle: String
     fun removePlayerConfirmMessage(name: String): String
     fun seatNumber(num: Int): String
+
+    // First Run Language Dialog
+    val initialLanguageTitle: String
+    val initialLanguageSubtitle: String
+    val persianOptionTitle: String
+    val persianOptionDesc: String
+    val englishOptionTitle: String
+    val englishOptionDesc: String
+    val confirmLanguageBtn: String
+
+    // Raise Controls
+    val raiseInputLabel: String
+    fun stepSbInfo(amount: Long, currency: String): String
 }
 
 object PersianStrings : AppStrings {
@@ -442,6 +455,17 @@ object PersianStrings : AppStrings {
     override val removePlayerConfirmTitle = "حذف بازیکن"
     override fun removePlayerConfirmMessage(name: String) = "آیا از حذف $name اطمینان دارید؟"
     override fun seatNumber(num: Int) = "صندلی شماره $num"
+
+    override val initialLanguageTitle = "انتخاب زبان برنامه / Select Language"
+    override val initialLanguageSubtitle = "لطفاً زبان مورد نظر خود را برای شروع انتخاب کنید:"
+    override val persianOptionTitle = "فارسی (Persian)"
+    override val persianOptionDesc = "تنظیم زبان به فارسی و واحد به «چیپ»"
+    override val englishOptionTitle = "English"
+    override val englishOptionDesc = "Set language to English and unit to \"chip\""
+    override val confirmLanguageBtn = "تأیید و شروع بازی"
+
+    override val raiseInputLabel = "تعداد چیپ شرط"
+    override fun stepSbInfo(amount: Long, currency: String) = "گام تغییر: ±$amount $currency (اسمال بلایند)"
 }
 
 object EnglishStrings : AppStrings {
@@ -656,6 +680,17 @@ object EnglishStrings : AppStrings {
     override val removePlayerConfirmTitle = "Remove Player"
     override fun removePlayerConfirmMessage(name: String) = "Are you sure you want to remove $name?"
     override fun seatNumber(num: Int) = "Seat #$num"
+
+    override val initialLanguageTitle = "Select Language / انتخاب زبان"
+    override val initialLanguageSubtitle = "Please select your preferred language to get started:"
+    override val persianOptionTitle = "فارسی (Persian)"
+    override val persianOptionDesc = "تنظیم زبان به فارسی و واحد به «چیپ»"
+    override val englishOptionTitle = "English"
+    override val englishOptionDesc = "Set language to English and chip unit to \"chip\""
+    override val confirmLanguageBtn = "Confirm & Start Game"
+
+    override val raiseInputLabel = "Bet/Raise Chip Amount"
+    override fun stepSbInfo(amount: Long, currency: String) = "Step: ±$amount $currency (Small Blind)"
 }
 
 fun getAppStrings(lang: String): AppStrings {

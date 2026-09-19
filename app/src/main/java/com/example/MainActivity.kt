@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
+import com.example.poker.ui.components.InitialLanguageDialog
 import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.poker.ui.i18n.getAppStrings
 import com.example.poker.ui.screens.AnalyticsScreen
@@ -81,6 +82,14 @@ class MainActivity : ComponentActivity() {
                     LocalAppStrings provides appStrings
                 ) {
                     PokerApp(viewModel = viewModel)
+
+                    if (state.isFirstLaunchLanguagePromptPending) {
+                        InitialLanguageDialog(
+                            onSelectLanguage = { selectedLang ->
+                                viewModel.selectInitialLanguage(selectedLang)
+                            }
+                        )
+                    }
                 }
             }
         }
