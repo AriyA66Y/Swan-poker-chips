@@ -518,29 +518,40 @@ fun SettingsDialog(
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) {
-                        Text("انصراف", color = Color.White.copy(alpha = 0.7f))
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(
-                        onClick = {
-                            val sb = sbText.toLongOrNull() ?: settings.smallBlind
-                            val bb = bbText.toLongOrNull() ?: settings.bigBlind
-                            val ante = anteText.toLongOrNull() ?: settings.ante
-                            onSave(
-                                settings.copy(
-                                    smallBlind = sb,
-                                    bigBlind = bb,
-                                    ante = ante,
-                                    currencyName = currencyName.ifEmpty { "چیپ" }
+                    Text(
+                        text = "نسخه ${com.example.BuildConfig.VERSION_NAME}",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.4f),
+                            fontSize = 11.sp
+                        )
+                    )
+
+                    Row {
+                        TextButton(onClick = onDismiss) {
+                            Text("انصراف", color = Color.White.copy(alpha = 0.7f))
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                val sb = sbText.toLongOrNull() ?: settings.smallBlind
+                                val bb = bbText.toLongOrNull() ?: settings.bigBlind
+                                val ante = anteText.toLongOrNull() ?: settings.ante
+                                onSave(
+                                    settings.copy(
+                                        smallBlind = sb,
+                                        bigBlind = bb,
+                                        ante = ante,
+                                        currencyName = currencyName.ifEmpty { "چیپ" }
+                                    )
                                 )
-                            )
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary)
-                    ) {
-                        Text("ذخیره تنظیمات", color = Color.Black, fontWeight = FontWeight.Bold)
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary)
+                        ) {
+                            Text("ذخیره تنظیمات", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

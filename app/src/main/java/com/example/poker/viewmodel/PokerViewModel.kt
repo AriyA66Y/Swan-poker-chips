@@ -1,7 +1,11 @@
 package com.example.poker.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.poker.data.GameRepository
+import com.example.poker.data.PokerDatabase
+import com.example.poker.data.entity.GameTemplateEntity
 import com.example.poker.logic.PotCalculator
 import com.example.poker.model.ActionType
 import com.example.poker.model.BuyInRecord
@@ -14,9 +18,12 @@ import com.example.poker.model.PlayerHandStatus
 import com.example.poker.model.Pot
 import com.example.poker.model.Street
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlin.math.max
 import kotlin.math.min
 
@@ -39,31 +46,67 @@ data class PokerUiState(
     val lastHandSummary: String? = null
 )
 
-class PokerViewModel : ViewModel() {
+class PokerViewModel(
+    application: Application,
+    private val repository: GameRepository
+) : AndroidViewModel(application) {
+
+    constructor(application: Application) : this(
+        application,
+        GameRepository(PokerDatabase.getInstance(application).gameDao())
+    )
 
     private val _uiState = MutableStateFlow(PokerUiState())
     val uiState: StateFlow<PokerUiState> = _uiState.asStateFlow()
 
+    val templates: StateFlow<List<GameTemplateEntity>> = repository.getAllTemplatesFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _userMessage = MutableStateFlow<String?>(null)
+    val userMessage: StateFlow<String?> = _userMessage.asStateFlow()
+
+    fun clearUserMessage() {
+        _userMessage.value = null
+    }
+
     init {
-        // Initialize with default standard players to make first launch instantly playable and exciting
-        val defaultColors = listOf(
-            0xFF1E88E5L, // Blue
-            0xFFE53935L, // Red
-            0xFF43A047L, // Green
-            0xFF8E24AAL, // Purple
-            0xFFFB8C00L, // Orange
-            0xFF00ACC1L  // Teal
-        )
-        val initialPlayers = listOf(
-            Player(name = "بازیکن ۱ (شما)", seatIndex = 0, chips = 1000L, totalBuyIn = 1000L, colorHex = defaultColors[0]),
-            Player(name = "بازیکن ۲", seatIndex = 1, chips = 1000L, totalBuyIn = 1000L, colorHex = defaultColors[1]),
-            Player(name = "بازیکن ۳", seatIndex = 2, chips = 1000L, totalBuyIn = 1000L, colorHex = defaultColors[2]),
-            Player(name = "بازیکن ۴", seatIndex = 3, chips = 1000L, totalBuyIn = 1000L, colorHex = defaultColors[3])
-        )
-        val buyIns = initialPlayers.map {
-            BuyInRecord(playerId = it.id, playerName = it.name, amount = it.totalBuyIn, isInitial = true)
+        viewModelScope.launch {
+            val savedState = repository.loadCurrentGameState()
+            if (savedState != null && savedState.players.isNotEmpty()) {
+                _uiState.value = savedState
+            } else {
+                // Initialize with default standard players to make first launch instantly playable and exciting
+                val defaultColors = listOf(
+                    0xFF1E88E5L, // Blue
+                    0xFFE53935L, // Red
+                    0xFF43A047L, // Green
+                    0xFF8E24AAL, // Purple
+                    0xFFFB8C00L, // Orange
+                    0xFF00ACC1L  // Teal
+                )
+                val initialPlayers = listOf(
+                    Player(name = "بازیکن ۱ (شما)", seatIndex = 0, chips = 1000L, totalBuyIn = 1000L, colorHex = defaultColors[0]),
+                    Player(name = "بازیکن ۲", seatIndex = 1, chips = 1000L, totalBuyIn = 1000L, colorHex = defaultColors[1]),
+                    Player(name = "بازیکن ۳", seatIndex = 2, chips = 1000L, totalBuyIn = 1000L, colorHex = defaultColors[2]),
+                    Player(name = "بازیکن ۴", seatIndex = 3, chips = 1000L, totalBuyIn = 1000L, colorHex = defaultColors[3])
+                )
+                val buyIns = initialPlayers.map {
+                    BuyInRecord(playerId = it.id, playerName = it.name, amount = it.totalBuyIn, isInitial = true)
+                }
+                val initialState = _uiState.value.copy(players = initialPlayers, buyInRecords = buyIns)
+                _uiState.value = initialState
+                repository.saveCurrentGameState(initialState)
+            }
+
+            // Continuously auto-persist whenever uiState changes
+            _uiState.collect { state ->
+                try {
+                    repository.saveCurrentGameState(state)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
-        _uiState.update { it.copy(players = initialPlayers, buyInRecords = buyIns) }
     }
 
     // -------------------------------------------------------------
@@ -737,6 +780,82 @@ class PokerViewModel : ViewModel() {
 
     fun dismissShowdownModal() {
         _uiState.update { it.copy(isShowdownModalOpen = false) }
+    }
+
+    // -------------------------------------------------------------
+    // TEMPLATE MANAGEMENT & GAME RESTART
+    // -------------------------------------------------------------
+
+    fun saveCurrentAsTemplate(name: String, existingId: String? = null, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                repository.saveTemplate(name, _uiState.value, existingId)
+                _userMessage.value = "تمپلیت «$name» با موفقیت ذخیره شد."
+                onComplete?.invoke()
+            } catch (e: Exception) {
+                _userMessage.value = "خطا در ذخیره تمپلیت: ${e.message}"
+            }
+        }
+    }
+
+    fun loadTemplate(id: String, onComplete: (() -> Unit)? = null) {
+        viewModelScope.launch {
+            try {
+                val loadedState = repository.loadTemplateState(id)
+                if (loadedState != null) {
+                    _uiState.value = loadedState
+                    repository.saveCurrentGameState(loadedState)
+                    _userMessage.value = "تمپلیت با موفقیت بازیابی شد."
+                    onComplete?.invoke()
+                } else {
+                    _userMessage.value = "تمپلیت یافت نشد."
+                }
+            } catch (e: Exception) {
+                _userMessage.value = "خطا در بازیابی تمپلیت: ${e.message}"
+            }
+        }
+    }
+
+    fun deleteTemplate(id: String) {
+        viewModelScope.launch {
+            try {
+                repository.deleteTemplate(id)
+                _userMessage.value = "تمپلیت حذف شد."
+            } catch (e: Exception) {
+                _userMessage.value = "خطا در حذف تمپلیت: ${e.message}"
+            }
+        }
+    }
+
+    fun restartGame() {
+        _uiState.update { state ->
+            val resetPlayers = state.players.map { player ->
+                player.copy(
+                    chips = player.totalBuyIn,
+                    currentStreetBet = 0L,
+                    totalHandContributed = 0L,
+                    status = PlayerHandStatus.ACTIVE,
+                    hasActedThisRound = false
+                )
+            }
+            state.copy(
+                players = resetPlayers,
+                dealerIndex = 0,
+                currentStreet = Street.ENDED,
+                currentTurnPlayerId = null,
+                currentHighestBet = 0L,
+                minRaise = state.settings.bigBlind,
+                pots = emptyList(),
+                handNumber = 0,
+                actionLogs = emptyList(),
+                handHistory = emptyList(),
+                chipAdjustments = emptyList(),
+                lastHandSummary = null,
+                isShowdownModalOpen = false,
+                isAutoHandOver = false
+            )
+        }
+        _userMessage.value = "وضعیت بازی با موفقیت به قبل از شروع دست اول بازگردانده شد."
     }
 
     private fun getCurrentPlayer(): Player? {

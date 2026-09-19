@@ -3,8 +3,10 @@ package com.example.poker.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,16 +25,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,8 +63,10 @@ import com.example.poker.ui.components.BettingControls
 import com.example.poker.ui.components.PlayerSeatCard
 import com.example.poker.ui.components.PotsDisplay
 import com.example.poker.ui.components.RebuyDialog
+import com.example.poker.ui.components.RestartGameDialog
 import com.example.poker.ui.components.SettingsDialog
 import com.example.poker.ui.components.ShowdownDialog
+import com.example.poker.ui.components.TemplatesDialog
 import com.example.poker.viewmodel.PokerViewModel
 import com.example.ui.theme.BackgroundDark
 import com.example.ui.theme.FeltBorder
@@ -64,9 +74,11 @@ import com.example.ui.theme.FeltCard
 import com.example.ui.theme.GoldDark
 import com.example.ui.theme.GoldLight
 import com.example.ui.theme.GoldPrimary
+import com.example.ui.theme.LossRed
 import com.example.ui.theme.ProfitGreen
 import com.example.ui.theme.SurfaceDark
 import com.example.ui.theme.SurfaceElevated
+import kotlinx.coroutines.delay
 
 @Composable
 fun TableScreen(
@@ -74,11 +86,22 @@ fun TableScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
+    val templates by viewModel.templates.collectAsState()
+    val userMessage by viewModel.userMessage.collectAsState()
 
     var showAddPlayerDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showTemplatesDialog by remember { mutableStateOf(false) }
+    var showRestartDialog by remember { mutableStateOf(false) }
     var playerToRebuy by remember { mutableStateOf<Player?>(null) }
     var playerToAdjust by remember { mutableStateOf<Player?>(null) }
+
+    LaunchedEffect(userMessage) {
+        if (userMessage != null) {
+            delay(3500)
+            viewModel.clearUserMessage()
+        }
+    }
 
     val currentTurnPlayer = state.players.firstOrNull { it.id == state.currentTurnPlayerId }
     val isHandActive = (state.currentStreet != Street.ENDED)
@@ -161,8 +184,44 @@ fun TableScreen(
                     }
                 }
 
-                // Header actions: Add player & Settings
+                // Header actions: Restart, Templates, Add player & Settings
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = { showRestartDialog = true },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceElevated)
+                            .testTag("restart_icon_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RestartAlt,
+                            contentDescription = "ری‌استارت بازی",
+                            tint = LossRed.copy(alpha = 0.9f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    IconButton(
+                        onClick = { showTemplatesDialog = true },
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceElevated)
+                            .testTag("templates_icon_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Bookmarks,
+                            contentDescription = "تمپلیت‌های بازی",
+                            tint = GoldPrimary,
+                            modifier = Modifier.size(19.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
                     IconButton(
                         onClick = { showAddPlayerDialog = true },
                         modifier = Modifier
@@ -171,10 +230,10 @@ fun TableScreen(
                             .background(SurfaceElevated)
                             .testTag("add_player_icon_button")
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Player", tint = GoldPrimary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Add, contentDescription = "Add Player", tint = GoldLight, modifier = Modifier.size(20.dp))
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
 
                     IconButton(
                         onClick = { showSettingsDialog = true },
@@ -245,30 +304,72 @@ fun TableScreen(
                 }
             }
 
-            // Start New Hand Button when hand is ended
+            // Start New Hand & Restart Buttons when hand is ended
             if (!isHandActive) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
-                    Button(
-                        onClick = { viewModel.startNewHand() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp)
-                            .testTag("start_new_hand_button"),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary)
-                    ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = if (state.handNumber == 0) "شروع اولین دست" else "شروع دست جدید",
-                            color = Color.Black,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
+                    if (state.handNumber > 0) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { viewModel.startNewHand() },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                                    .testTag("start_new_hand_button"),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "شروع دست جدید",
+                                    color = Color.Black,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            }
+
+                            OutlinedButton(
+                                onClick = { showRestartDialog = true },
+                                modifier = Modifier
+                                    .height(48.dp)
+                                    .testTag("restart_bottom_button"),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, LossRed.copy(alpha = 0.6f)),
+                                colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                                    contentColor = LossRed
+                                )
+                            ) {
+                                Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("ری‌استارت", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = { viewModel.startNewHand() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                                .testTag("start_new_hand_button"),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary)
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "شروع اولین دست",
+                                color = Color.Black,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        }
                     }
                 }
             }
@@ -381,5 +482,77 @@ fun TableScreen(
             onDismiss = { playerToAdjust = null },
             currencySymbol = state.settings.currencyName
         )
+    }
+
+    if (showTemplatesDialog) {
+        TemplatesDialog(
+            state = state,
+            templates = templates,
+            onDismiss = { showTemplatesDialog = false },
+            onSaveTemplate = { name, existingId ->
+                viewModel.saveCurrentAsTemplate(name, existingId) {
+                    showTemplatesDialog = false
+                }
+            },
+            onLoadTemplate = { id ->
+                viewModel.loadTemplate(id) {
+                    showTemplatesDialog = false
+                }
+            },
+            onDeleteTemplate = { id ->
+                viewModel.deleteTemplate(id)
+            }
+        )
+    }
+
+    if (showRestartDialog) {
+        RestartGameDialog(
+            onDismiss = { showRestartDialog = false },
+            onConfirmRestart = {
+                viewModel.restartGame()
+                showRestartDialog = false
+            }
+        )
+    }
+
+    // User Message Toast / Banner Notification
+    userMessage?.let { msg ->
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = SurfaceDark,
+                tonalElevation = 6.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                    .clickable { viewModel.clearUserMessage() }
+                    .testTag("user_message_banner")
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = ProfitGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = msg,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 12.sp
+                        )
+                    )
+                }
+            }
+        }
     }
 }

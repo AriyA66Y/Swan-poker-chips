@@ -21,9 +21,10 @@ class GreetingScreenshotTest {
 
   @Test
   fun greeting_screenshot() {
+    val app = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.app.Application>()
     composeTestRule.setContent {
       MyApplicationTheme {
-        PokerApp(viewModel = com.example.poker.viewmodel.PokerViewModel())
+        PokerApp(viewModel = com.example.poker.viewmodel.PokerViewModel(app))
       }
     }
 
