@@ -23,16 +23,16 @@ jobs:
           distribution: 'temurin'
 
       # بازسازی فایل کی‌استور ثابت از سکرت‌های گیت‌هاب
-      - name: Decode Keystore
+            - name: Decode Keystore
         env:
           KEYSTORE_DATA: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           if [ -n "$KEYSTORE_DATA" ]; then
-            echo "$KEYSTORE_DATA" | base64 -d > debug.keystore
+            echo "$KEYSTORE_DATA" | tr -d '\r\n ' | base64 -d > debug.keystore
           else
-            # فال‌بک در صورتی که سکرت هنوز تعریف نشده باشه
             keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
+
 
       # بالا بردن اتوماتیک شماره نسخه
       - name: Auto Bump Version
