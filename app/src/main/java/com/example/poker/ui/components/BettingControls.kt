@@ -24,9 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -51,10 +48,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.poker.model.Player
 import com.example.poker.model.Pot
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.ui.theme.AllInPurple
 import com.example.ui.theme.BlueCall
 import com.example.ui.theme.FeltBorder
-import com.example.ui.theme.FoldGrey
 import com.example.ui.theme.GoldLight
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.LossRed
@@ -78,6 +75,7 @@ fun BettingControls(
     modifier: Modifier = Modifier,
     currencySymbol: String = "چیپ"
 ) {
+    val strings = LocalAppStrings.current
     val callDiff = max(0L, currentHighestBet - player.currentStreetBet)
     val canCheck = (callDiff == 0L)
     val actualCallAmount = min(callDiff, player.chips)
@@ -121,7 +119,7 @@ fun BettingControls(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "نوبت: ${player.name}",
+                    text = strings.turnPlayer(player.name),
                     style = MaterialTheme.typography.titleSmall.copy(
                         color = GoldLight,
                         fontWeight = FontWeight.Bold
@@ -130,7 +128,7 @@ fun BettingControls(
             }
 
             Text(
-                text = "موجودی: ${formatNumber(player.chips)} $currencySymbol",
+                text = "${strings.chipsLabel}: ${formatNumber(player.chips)} $currencySymbol",
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = Color.White.copy(alpha = 0.8f),
                     fontWeight = FontWeight.SemiBold
@@ -164,7 +162,7 @@ fun BettingControls(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (currentHighestBet == 0L) "مبلغ بت:" else "مبلغ نهایی ریز:",
+                        text = if (currentHighestBet == 0L) strings.betAmountLabel else strings.raiseAmountLabel,
                         style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.7f))
                     )
                     Text(
@@ -197,24 +195,24 @@ fun BettingControls(
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    QuickBetButton(text = "حداقل (Min)") {
+                    QuickBetButton(text = strings.quickMin) {
                         sliderValue = safeMin.toFloat()
                     }
-                    QuickBetButton(text = "۲ برابر بلایند") {
+                    QuickBetButton(text = strings.quick2x) {
                         val v = min(maxBetTotal, currentHighestBet + minRaise * 2)
                         sliderValue = max(safeMin, v).toFloat()
                     }
                     if (totalPotAmount > 0) {
-                        QuickBetButton(text = "نصف پات (½)") {
+                        QuickBetButton(text = strings.quickHalfPot) {
                             val v = min(maxBetTotal, currentHighestBet + (totalPotAmount / 2))
                             sliderValue = max(safeMin, v).toFloat()
                         }
-                        QuickBetButton(text = "کل پات (Pot)") {
+                        QuickBetButton(text = strings.quickPot) {
                             val v = min(maxBetTotal, currentHighestBet + totalPotAmount)
                             sliderValue = max(safeMin, v).toFloat()
                         }
                     }
-                    QuickBetButton(text = "آل‌این (Max)", isAllIn = true) {
+                    QuickBetButton(text = strings.quickAllIn, isAllIn = true) {
                         sliderValue = maxBetTotal.toFloat()
                     }
                 }
@@ -237,7 +235,7 @@ fun BettingControls(
                     Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "ثبت افزایش شرط",
+                        text = strings.confirmRaise,
                         color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp
@@ -265,7 +263,7 @@ fun BettingControls(
                 border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(LossRed.copy(alpha = 0.7f)))
             ) {
                 Text(
-                    text = "فولد",
+                    text = strings.fold,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
                     maxLines = 1
@@ -284,7 +282,7 @@ fun BettingControls(
                     colors = ButtonDefaults.buttonColors(containerColor = ProfitGreen)
                 ) {
                     Text(
-                        text = "چک",
+                        text = strings.check,
                         color = Color.Black,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 14.sp,
@@ -306,7 +304,7 @@ fun BettingControls(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "کال",
+                            text = strings.call,
                             color = Color.Black,
                             fontWeight = FontWeight.Bold,
                             fontSize = 12.sp,
@@ -339,7 +337,7 @@ fun BettingControls(
                     )
                 ) {
                     Text(
-                        text = if (currentHighestBet == 0L) "بت" else "ریز",
+                        text = if (currentHighestBet == 0L) strings.bet else strings.raise,
                         color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
@@ -359,7 +357,7 @@ fun BettingControls(
                 colors = ButtonDefaults.buttonColors(containerColor = AllInPurple)
             ) {
                 Text(
-                    text = "آل‌این",
+                    text = strings.allIn,
                     color = Color.White,
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 12.sp,

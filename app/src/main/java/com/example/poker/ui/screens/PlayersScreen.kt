@@ -52,6 +52,7 @@ import com.example.poker.ui.components.AdjustChipsDialog
 import com.example.poker.ui.components.PokerChipIcon
 import com.example.poker.ui.components.RebuyDialog
 import com.example.poker.ui.components.formatNumber
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.poker.viewmodel.PokerViewModel
 import com.example.ui.theme.BackgroundDark
 import com.example.ui.theme.FeltBorder
@@ -68,6 +69,7 @@ fun PlayersScreen(
     viewModel: PokerViewModel,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val state by viewModel.uiState.collectAsState()
     val currency = state.settings.currencyName
 
@@ -108,14 +110,14 @@ fun PlayersScreen(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "مدیریت بازیکنان و چیپ‌ها",
+                            text = strings.playersManagementTitle,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 color = GoldLight,
                                 fontWeight = FontWeight.ExtraBold
                             )
                         )
                         Text(
-                            text = "افزودن، حذف، خرید مجدد و تغییر دستی چیپ",
+                            text = strings.playersManagementSubtitle,
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White.copy(alpha = 0.65f),
                                 fontSize = 11.sp
@@ -132,7 +134,7 @@ fun PlayersScreen(
                 ) {
                     Icon(Icons.Default.PersonAdd, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("بازیکن جدید", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text(strings.addPlayerTitle, color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             }
         }
@@ -155,7 +157,7 @@ fun PlayersScreen(
                 Icon(Icons.Default.MonetizationOn, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "تاریخچه ورودی‌ها و خریدهای مجدد (Buy-ins)",
+                    text = strings.buyInHistoryTitle,
                     style = MaterialTheme.typography.titleSmall.copy(
                         color = GoldLight,
                         fontWeight = FontWeight.Bold
@@ -182,7 +184,7 @@ fun PlayersScreen(
                         PokerChipIcon(size = 14, baseColor = GoldPrimary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${record.playerName} (${if (record.isInitial) "ورودی اولیه" else "خرید مجدد"})",
+                            text = "${record.playerName} (${if (record.isInitial) strings.initialBuyIn else strings.rebuyHistory})",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White,
                                 fontWeight = FontWeight.SemiBold
@@ -247,6 +249,7 @@ fun PlayerManageCard(
     onAdjust: () -> Unit,
     onRemove: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     val pnl = player.netProfitLoss
 
     Column(
@@ -289,7 +292,7 @@ fun PlayerManageCard(
                         )
                     )
                     Text(
-                        text = "صندلی شماره ${player.seatIndex + 1}",
+                        text = "${strings.seatNumber(player.seatIndex + 1)}",
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = Color.White.copy(alpha = 0.5f),
                             fontSize = 10.sp
@@ -302,7 +305,7 @@ fun PlayerManageCard(
                 onClick = onRemove,
                 modifier = Modifier.size(32.dp).testTag("remove_player_${player.id}")
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Remove Player", tint = LossRed.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Delete, contentDescription = strings.removePlayerLabel, tint = LossRed.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
             }
         }
 
@@ -318,15 +321,15 @@ fun PlayerManageCard(
             horizontalArrangement = Arrangement.SpaceAround
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("موجودی چیپ", style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp))
+                Text(strings.chipsLabel, style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp))
                 Text("${formatNumber(player.chips)}", style = MaterialTheme.typography.bodyMedium.copy(color = GoldLight, fontWeight = FontWeight.Bold, fontSize = 13.sp))
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("کل ورودی (Buy-in)", style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp))
+                Text(strings.totalBuyInLabel, style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp))
                 Text("${formatNumber(player.totalBuyIn)}", style = MaterialTheme.typography.bodyMedium.copy(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp))
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("سود / زیان", style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp))
+                Text(strings.pnlLabel, style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.6f), fontSize = 10.sp))
                 Text(
                     "${if (pnl > 0) "+" else ""}${formatNumber(pnl)}",
                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -353,7 +356,7 @@ fun PlayerManageCard(
             ) {
                 Icon(Icons.Default.Add, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("خرید مجدد", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
+                Text(strings.rebuyTitle, color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
             }
 
             OutlinedButton(
@@ -364,7 +367,7 @@ fun PlayerManageCard(
             ) {
                 Icon(Icons.Default.Tune, contentDescription = null, tint = ProfitGreen, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("تنظیم چیپ", fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
+                Text(strings.adjustChipsTitle, fontWeight = FontWeight.Bold, fontSize = 12.sp, maxLines = 1)
             }
         }
     }

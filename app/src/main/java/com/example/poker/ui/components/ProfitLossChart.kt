@@ -39,6 +39,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.poker.model.Player
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.ui.theme.FeltBorder
 import com.example.ui.theme.GoldDark
 import com.example.ui.theme.GoldLight
@@ -57,6 +58,7 @@ fun ProfitLossChart(
     currencySymbol: String = "چیپ"
 ) {
     if (players.isEmpty()) return
+    val strings = LocalAppStrings.current
 
     // Sort players by net profit descending (top winner first)
     val sortedPlayers = players.sortedByDescending { it.netProfitLoss }
@@ -99,7 +101,7 @@ fun ProfitLossChart(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
-                        text = "نمودار سود و زیان بازیکنان",
+                        text = strings.chartTitle,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = GoldLight,
@@ -107,7 +109,7 @@ fun ProfitLossChart(
                         )
                     )
                     Text(
-                        text = "محاسبه دقیق چیپ‌های فعلی منهای مبلغ خرید (Buy-in)",
+                        text = strings.chartSubtitle,
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.65f),
                             fontSize = 11.sp
@@ -152,7 +154,7 @@ fun ProfitLossChart(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = if (isBalanced) "تراز مالی میز کامل و دقیق است" else "اختلاف در چیپ‌ها و ورودی‌ها",
+                    text = if (isBalanced) strings.balanceExact else strings.balanceMismatch,
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold,
@@ -162,7 +164,7 @@ fun ProfitLossChart(
             }
 
             Text(
-                text = "کل چیپ‌ها: ${formatNumber(totalChips)} | ورودی‌ها: ${formatNumber(totalBuyIn)}",
+                text = "${strings.chipsLabel}: ${formatNumber(totalChips)} | ${strings.totalBuyIns}: ${formatNumber(totalBuyIn)}",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = Color.White.copy(alpha = 0.7f),
                     fontSize = 10.sp
@@ -178,6 +180,7 @@ fun PlayerProfitLossBarRow(
     maxAbsValue: Long,
     currencySymbol: String
 ) {
+    val strings = LocalAppStrings.current
     val pnl = player.netProfitLoss
     val isProfit = pnl > 0
     val isLoss = pnl < 0
@@ -338,14 +341,14 @@ fun PlayerProfitLossBarRow(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "مجموع خرید: ${formatNumber(player.totalBuyIn)}",
+                text = "${strings.totalBuyInLabel}: ${formatNumber(player.totalBuyIn)}",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = Color.White.copy(alpha = 0.5f),
                     fontSize = 10.sp
                 )
             )
             Text(
-                text = "چیپ فعلی: ${formatNumber(player.chips)}",
+                text = "${strings.currentChips}: ${formatNumber(player.chips)}",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = Color.White.copy(alpha = 0.5f),
                     fontSize = 10.sp

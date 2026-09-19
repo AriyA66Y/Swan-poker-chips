@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.ui.theme.GoldLight
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.LossRed
@@ -46,6 +47,8 @@ fun RestartGameDialog(
     onDismiss: () -> Unit,
     onConfirmRestart: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(20.dp),
@@ -82,7 +85,7 @@ fun RestartGameDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 Text(
-                    text = "شروع مجدد بازی (ری‌استارت)",
+                    text = strings.restartDialogTitle,
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = GoldLight,
                         fontWeight = FontWeight.Bold,
@@ -115,7 +118,7 @@ fun RestartGameDialog(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "بازگشت به وضعیت قبل از شروع دست اول",
+                                text = strings.restartConfirmQuestion,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = GoldPrimary,
                                     fontWeight = FontWeight.Bold
@@ -124,10 +127,7 @@ fun RestartGameDialog(
                         }
 
                         Text(
-                            text = "با تأیید ری‌استارت:\n" +
-                                    "• موجودی چیپ تمام بازیکنان به مقدار بای‌این اولیه بازگردانده می‌شود.\n" +
-                                    "• تمام دست‌های ثبت‌شده و تاریخچه بازی پاک می‌شود.\n" +
-                                    "• شماره دست از ۱ مجدداً آغاز خواهد شد.",
+                            text = strings.restartWarningDetail,
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White.copy(alpha = 0.85f),
                                 lineHeight = 20.sp
@@ -153,7 +153,7 @@ fun RestartGameDialog(
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.3f))
                     ) {
                         Text(
-                            text = "انصراف",
+                            text = strings.cancel,
                             color = Color.White.copy(alpha = 0.9f),
                             fontWeight = FontWeight.SemiBold
                         )
@@ -181,7 +181,7 @@ fun RestartGameDialog(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "تأیید ری‌استارت",
+                            text = strings.confirmRestartBtn,
                             fontWeight = FontWeight.Bold
                         )
                     }

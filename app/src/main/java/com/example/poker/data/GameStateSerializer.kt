@@ -45,6 +45,7 @@ object GameStateSerializer {
             put("ante", state.settings.ante)
             put("autoPostBlinds", state.settings.autoPostBlinds)
             put("currencyName", state.settings.currencyName)
+            put("language", state.settings.language)
         }
         root.put("settings", sObj)
 
@@ -200,7 +201,8 @@ object GameStateSerializer {
                     bigBlind = sObj.optLong("bigBlind", 20L),
                     ante = sObj.optLong("ante", 0L),
                     autoPostBlinds = sObj.optBoolean("autoPostBlinds", true),
-                    currencyName = sObj.optString("currencyName", "چیپ")
+                    currencyName = sObj.optString("currencyName", "چیپ"),
+                    language = sObj.optString("language", "fa")
                 )
             } else {
                 GameSettings()

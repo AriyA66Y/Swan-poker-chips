@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.example.poker.data.entity.GameTemplateEntity
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.poker.viewmodel.PokerUiState
 import com.example.ui.theme.GoldDark
 import com.example.ui.theme.GoldLight
@@ -78,10 +79,16 @@ fun TemplatesDialog(
     onLoadTemplate: (id: String) -> Unit,
     onDeleteTemplate: (id: String) -> Unit
 ) {
+    val strings = LocalAppStrings.current
     var templateName by remember {
         mutableStateOf(
-            if (state.handNumber > 0) "بازی ${state.players.size} نفره (دست ${state.handNumber})"
-            else "گروه بازی ${state.players.size} نفره"
+            if (state.handNumber > 0) {
+                if (strings.languageCode == "en") "${state.players.size}-Player Game (Hand ${state.handNumber})"
+                else "بازی ${state.players.size} نفره (دست ${state.handNumber})"
+            } else {
+                if (strings.languageCode == "en") "${state.players.size}-Player Game Group"
+                else "گروه بازی ${state.players.size} نفره"
+            }
         )
     }
     var pendingLoadTemplate by remember { mutableStateOf<GameTemplateEntity?>(null) }
@@ -127,7 +134,7 @@ fun TemplatesDialog(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "تمپلیت‌های بازی (سیو چندگانه)",
+                                text = strings.templatesTitle,
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     color = GoldLight,
                                     fontWeight = FontWeight.Bold,
@@ -135,7 +142,7 @@ fun TemplatesDialog(
                                 )
                             )
                             Text(
-                                text = "ذخیره و بازیابی گروه‌ها و نتایج",
+                                text = strings.templatesSubtitle,
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = Color.White.copy(alpha = 0.6f),
                                     fontSize = 12.sp
@@ -153,7 +160,7 @@ fun TemplatesDialog(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Close,
-                            contentDescription = "بستن",
+                            contentDescription = strings.cancel,
                             tint = Color.White.copy(alpha = 0.7f),
                             modifier = Modifier.size(18.dp)
                         )
@@ -181,7 +188,7 @@ fun TemplatesDialog(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "ذخیره بازی فعلی به عنوان تمپلیت",
+                                text = strings.saveCurrentAsTemplate,
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     color = GoldLight,
                                     fontWeight = FontWeight.Bold,
@@ -195,7 +202,7 @@ fun TemplatesDialog(
                         OutlinedTextField(
                             value = templateName,
                             onValueChange = { templateName = it },
-                            placeholder = { Text("نام تمپلیت (مثلاً گروه دوستانه پنج‌شنبه)", fontSize = 12.sp) },
+                            placeholder = { Text(strings.templateNameHint, fontSize = 12.sp) },
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -219,7 +226,7 @@ fun TemplatesDialog(
                             // Summary badge of current game
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "${state.players.size} بازیکن",
+                                    text = "${state.players.size} ${if (strings.languageCode == "en") "Players" else "بازیکن"}",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = GoldLight.copy(alpha = 0.8f),
                                         fontSize = 11.sp
@@ -230,7 +237,7 @@ fun TemplatesDialog(
                                     color = Color.White.copy(alpha = 0.4f)
                                 )
                                 Text(
-                                    text = "${state.handNumber} دست ثبت‌شده",
+                                    text = "${state.handNumber} ${if (strings.languageCode == "en") "Hands" else "دست"}",
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = GoldLight.copy(alpha = 0.8f),
                                         fontSize = 11.sp
@@ -260,7 +267,7 @@ fun TemplatesDialog(
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("ذخیره", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(strings.saveTemplateBtn, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
                     }
@@ -275,7 +282,7 @@ fun TemplatesDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "تمپلیت‌های ذخیره‌شده (${templates.size})",
+                        text = strings.savedTemplatesHeader(templates.size),
                         style = MaterialTheme.typography.titleSmall.copy(
                             color = GoldLight,
                             fontWeight = FontWeight.Bold,
@@ -297,7 +304,7 @@ fun TemplatesDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "هنوز تمپلیتی ذخیره نشده است.\nمی‌توانید وضعیت فعلی بازی را در بالا ذخیره نمایید.",
+                            text = strings.noTemplatesMessage,
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White.copy(alpha = 0.5f),
                                 textAlign = TextAlign.Center,
@@ -342,7 +349,7 @@ fun TemplatesDialog(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "بازیابی تمپلیت «${template.name}»",
+                        text = strings.restoreTemplateTitle(template.name),
                         style = MaterialTheme.typography.titleMedium.copy(
                             color = GoldLight,
                             fontWeight = FontWeight.Bold
@@ -350,7 +357,7 @@ fun TemplatesDialog(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "آیا مایلید این تمپلیت بارگذاری شود؟\nوضعیت بازیکنان، چیپ‌ها و تاریخچه به وضعیت ذخیره‌شده در این تمپلیت (${template.playerCount} بازیکن و ${template.handsCount} دست) تغییر خواهد کرد.",
+                        text = strings.restoreTemplateBody(template.playerCount, template.handsCount),
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.8f),
                             lineHeight = 20.sp
@@ -365,7 +372,7 @@ fun TemplatesDialog(
                             onClick = { pendingLoadTemplate = null },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("انصراف")
+                            Text(strings.cancel)
                         }
                         Button(
                             onClick = {
@@ -381,7 +388,7 @@ fun TemplatesDialog(
                         ) {
                             Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("تأیید و بازیابی", fontWeight = FontWeight.Bold)
+                            Text(strings.confirmRestoreBtn, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -402,7 +409,7 @@ fun TemplatesDialog(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "به‌روزرسانی تمپلیت «${template.name}»",
+                        text = strings.updateTemplateTitle(template.name),
                         style = MaterialTheme.typography.titleMedium.copy(
                             color = GoldLight,
                             fontWeight = FontWeight.Bold
@@ -410,7 +417,7 @@ fun TemplatesDialog(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "آیا می‌خواهید تمپلیت «${template.name}» با وضعیت و نتایج فعلی بازی به‌روزرسانی و بازنویسی شود؟",
+                        text = strings.updateTemplateBody(template.name),
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.8f),
                             lineHeight = 20.sp
@@ -425,7 +432,7 @@ fun TemplatesDialog(
                             onClick = { pendingOverwriteTemplate = null },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("انصراف")
+                            Text(strings.cancel)
                         }
                         Button(
                             onClick = {
@@ -440,7 +447,7 @@ fun TemplatesDialog(
                         ) {
                             Icon(Icons.Default.Sync, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("تأیید به‌روزرسانی", fontWeight = FontWeight.Bold)
+                            Text(strings.confirmUpdateBtn, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -461,7 +468,7 @@ fun TemplatesDialog(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "حذف تمپلیت «${template.name}»",
+                        text = strings.deleteTemplateTitle(template.name),
                         style = MaterialTheme.typography.titleMedium.copy(
                             color = LossRed,
                             fontWeight = FontWeight.Bold
@@ -469,7 +476,7 @@ fun TemplatesDialog(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = "آیا از حذف دائمی این تمپلیت اطمینان دارید؟ این عملیات قابل بازگشت نیست.",
+                        text = strings.deleteTemplateBody,
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.8f),
                             lineHeight = 20.sp
@@ -484,7 +491,7 @@ fun TemplatesDialog(
                             onClick = { pendingDeleteTemplate = null },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text("انصراف")
+                            Text(strings.cancel)
                         }
                         Button(
                             onClick = {
@@ -499,7 +506,7 @@ fun TemplatesDialog(
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("حذف تمپلیت", fontWeight = FontWeight.Bold)
+                            Text(strings.confirmDeleteBtn, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -516,6 +523,7 @@ private fun TemplateItemCard(
     onOverwrite: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val strings = LocalAppStrings.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -559,7 +567,7 @@ private fun TemplateItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Sync,
-                            contentDescription = "به‌روزرسانی با بازی فعلی",
+                            contentDescription = strings.confirmUpdateBtn,
                             tint = GoldPrimary.copy(alpha = 0.8f),
                             modifier = Modifier.size(18.dp)
                         )
@@ -571,7 +579,7 @@ private fun TemplateItemCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "حذف تمپلیت",
+                            contentDescription = strings.confirmDeleteBtn,
                             tint = LossRed.copy(alpha = 0.8f),
                             modifier = Modifier.size(18.dp)
                         )
@@ -603,7 +611,7 @@ private fun TemplateItemCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${template.playerCount} بازیکن",
+                                text = "${template.playerCount} ${if (strings.languageCode == "en") "Players" else "بازیکن"}",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = GoldLight,
                                     fontSize = 11.sp
@@ -629,7 +637,7 @@ private fun TemplateItemCard(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${template.handsCount} دست",
+                                text = "${template.handsCount} ${if (strings.languageCode == "en") "Hands" else "دست"}",
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = GoldLight,
                                     fontSize = 11.sp
@@ -655,7 +663,7 @@ private fun TemplateItemCard(
                         modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("بازیابی", fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                    Text(strings.restoreBtn, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                 }
             }
         }

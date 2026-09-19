@@ -8,19 +8,23 @@ enum class Street(val faName: String, val enName: String) {
     TURN("تِرن", "Turn"),
     RIVER("ریور", "River"),
     SHOWDOWN("تعیین برنده", "Showdown"),
-    ENDED("پایان دست", "Ended")
+    ENDED("پایان دست", "Ended");
+
+    fun getName(lang: String): String = if (lang == "en") enName else faName
 }
 
-enum class ActionType(val faTitle: String) {
-    POST_SB("ثبت اسمال بلایند"),
-    POST_BB("ثبت بیگ بلایند"),
-    POST_ANTE("ثبت آنته"),
-    CHECK("چک"),
-    CALL("کال"),
-    BET("بت"),
-    RAISE("ریز"),
-    ALL_IN("آل‌این"),
-    FOLD("فولد")
+enum class ActionType(val faTitle: String, val enTitle: String) {
+    POST_SB("ثبت اسمال بلایند", "Post SB"),
+    POST_BB("ثبت بیگ بلایند", "Post BB"),
+    POST_ANTE("ثبت آنته", "Post Ante"),
+    CHECK("چک", "Check"),
+    CALL("کال", "Call"),
+    BET("بت", "Bet"),
+    RAISE("ریز", "Raise"),
+    ALL_IN("آل‌این", "All-In"),
+    FOLD("فولد", "Fold");
+
+    fun getTitle(lang: String): String = if (lang == "en") enTitle else faTitle
 }
 
 data class PlayerAction(

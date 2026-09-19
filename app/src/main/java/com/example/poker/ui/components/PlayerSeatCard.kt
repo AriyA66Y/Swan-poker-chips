@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.poker.model.Player
 import com.example.poker.model.PlayerHandStatus
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.ui.theme.AllInPurple
 import com.example.ui.theme.FeltBorder
 import com.example.ui.theme.FoldGrey
@@ -67,6 +68,7 @@ fun PlayerSeatCard(
     modifier: Modifier = Modifier,
     currencySymbol: String = "چیپ"
 ) {
+    val strings = LocalAppStrings.current
     var menuExpanded by remember { mutableStateOf(false) }
 
     val borderColor by animateColorAsState(
@@ -136,7 +138,7 @@ fun PlayerSeatCard(
                     // Hand Status badge
                     if (player.status != PlayerHandStatus.ACTIVE) {
                         Text(
-                            text = player.status.faTitle,
+                            text = player.status.getTitle(strings.languageCode),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = when (player.status) {
                                     PlayerHandStatus.FOLDED -> FoldGrey
@@ -184,7 +186,7 @@ fun PlayerSeatCard(
                         modifier = Modifier.background(SurfaceElevated)
                     ) {
                         DropdownMenuItem(
-                            text = { Text("خرید مجدد چیپ (Re-buy)", color = Color.White) },
+                            text = { Text(strings.rebuyTitle, color = Color.White) },
                             leadingIcon = { Icon(Icons.Default.Add, contentDescription = null, tint = GoldPrimary) },
                             onClick = {
                                 menuExpanded = false
@@ -192,7 +194,7 @@ fun PlayerSeatCard(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("تنظیم دستی چیپ (+ / -)", color = Color.White) },
+                            text = { Text(strings.adjustChipsTitle, color = Color.White) },
                             leadingIcon = { Icon(Icons.Default.Tune, contentDescription = null, tint = ProfitGreen) },
                             onClick = {
                                 menuExpanded = false
@@ -200,7 +202,7 @@ fun PlayerSeatCard(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("حذف یا خروج از میز", color = LossRed) },
+                            text = { Text(strings.removePlayerLabel, color = LossRed) },
                             onClick = {
                                 menuExpanded = false
                                 onRemoveClick(player)
@@ -221,7 +223,7 @@ fun PlayerSeatCard(
                 // Stack Chips
                 Column {
                     Text(
-                        text = "موجودی چیپ",
+                        text = strings.chipsLabel,
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 10.sp
@@ -245,7 +247,7 @@ fun PlayerSeatCard(
                 if (player.currentStreetBet > 0 || player.totalHandContributed > 0) {
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "شرط این دست",
+                            text = strings.betThisHandLabel,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White.copy(alpha = 0.6f),
                                 fontSize = 10.sp
@@ -267,7 +269,7 @@ fun PlayerSeatCard(
                     val pnl = player.netProfitLoss
                     val isProfit = pnl >= 0
                     Text(
-                        text = "سود / زیان کل",
+                        text = strings.netPnlLabel,
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 10.sp
@@ -300,7 +302,7 @@ fun PlayerSeatCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "نوبت بازی این بازیکن است",
+                        text = strings.turnBanner,
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = Color.Black,
                             fontWeight = FontWeight.ExtraBold,

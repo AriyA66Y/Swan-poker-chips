@@ -45,6 +45,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.example.poker.model.Player
 import com.example.poker.model.PlayerHandStatus
 import com.example.poker.model.Pot
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.ui.theme.FeltBorder
 import com.example.ui.theme.FeltCard
 import com.example.ui.theme.GoldDark
@@ -62,6 +63,7 @@ fun ShowdownDialog(
     onDismiss: () -> Unit,
     currencySymbol: String = "چیپ"
 ) {
+    val strings = LocalAppStrings.current
     // Map of potId -> Set<String> of winner playerIds
     val selectedWinners = remember(pots) {
         mutableStateMapOf<String, Set<String>>().apply {
@@ -118,7 +120,7 @@ fun ShowdownDialog(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = "تعیین برنده و اهدای پات",
+                            text = strings.showdownTitle,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = GoldLight,
@@ -126,7 +128,7 @@ fun ShowdownDialog(
                             )
                         )
                         Text(
-                            text = "روی نام هر برنده کلیک کنید تا تیک بخورد",
+                            text = strings.showdownSubtitle,
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = Color.White.copy(alpha = 0.7f),
                                 fontSize = 11.sp
@@ -191,7 +193,7 @@ fun ShowdownDialog(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (allPotsHaveWinners) "تأیید و اهدای چیپ‌ها" else "برنده هر پات را مشخص کنید",
+                        text = if (allPotsHaveWinners) strings.confirmAwardPots else strings.selectWinnersWarning,
                         color = if (allPotsHaveWinners) Color.Black else Color.LightGray,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
@@ -210,6 +212,7 @@ fun PotResolutionCard(
     onToggleWinner: (String) -> Unit,
     currencySymbol: String
 ) {
+    val strings = LocalAppStrings.current
     // Show eligible players for this pot (or non-folded players if list empty)
     val eligiblePlayers = if (pot.eligiblePlayerIds.isNotEmpty()) {
         val matched = players.filter { pot.eligiblePlayerIds.contains(it.id) }
@@ -227,13 +230,20 @@ fun PotResolutionCard(
             .padding(12.dp)
     ) {
         // Pot Title & Amount
+        val displayPotName = if (strings.languageCode == "en") {
+            if (pot.name.contains("اصلی") || pot.name.contains("Main")) "Main Pot"
+            else pot.name.replace("پات جانبی", "Side Pot").replace("پات اصلی", "Main Pot")
+        } else {
+            pot.name
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = pot.name,
+                text = displayPotName,
                 style = MaterialTheme.typography.titleSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = GoldLight,
@@ -252,7 +262,7 @@ fun PotResolutionCard(
             val share = pot.amount / selectedWinnerIds.size
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "تقسیم مساوی: سهم هر برنده ${formatNumber(share)} $currencySymbol",
+                text = strings.evenSplit(share, currencySymbol),
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = ProfitGreen,
                     fontWeight = FontWeight.Bold,

@@ -50,6 +50,7 @@ import com.example.poker.model.HandResult
 import com.example.poker.model.Player
 import com.example.poker.ui.components.ProfitLossChart
 import com.example.poker.ui.components.formatNumber
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.poker.viewmodel.PokerViewModel
 import com.example.ui.theme.BackgroundDark
 import com.example.ui.theme.FeltBorder
@@ -70,6 +71,7 @@ fun AnalyticsScreen(
     viewModel: PokerViewModel,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val state by viewModel.uiState.collectAsState()
     val currency = state.settings.currencyName
 
@@ -109,14 +111,14 @@ fun AnalyticsScreen(
                 Spacer(modifier = Modifier.width(10.dp))
                 Column {
                     Text(
-                        text = "آمار و گزارش سود و زیان",
+                        text = strings.analyticsTitle,
                         style = MaterialTheme.typography.titleLarge.copy(
                             color = GoldLight,
                             fontWeight = FontWeight.ExtraBold
                         )
                     )
                     Text(
-                        text = "تحلیل عملکرد بازیکنان و تاریخچه دست‌ها",
+                        text = strings.analyticsSubtitle,
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.65f),
                             fontSize = 11.sp
@@ -133,15 +135,15 @@ fun AnalyticsScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 StatCard(
-                    title = "مجموع خریدها",
+                    title = strings.totalBuyIns,
                     value = "${formatNumber(totalBuyIn)} $currency",
                     icon = Icons.Default.MonetizationOn,
                     iconColor = GoldPrimary,
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
-                    title = "دست‌های بازی شده",
-                    value = "${state.handNumber} دست",
+                    title = strings.handsPlayed,
+                    value = "${state.handNumber} ${if (strings.languageCode == "en") "Hands" else "دست"}",
                     icon = Icons.Default.History,
                     iconColor = Color(0xFF64B5F6),
                     modifier = Modifier.weight(1f)
@@ -155,17 +157,17 @@ fun AnalyticsScreen(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 StatCard(
-                    title = "بیشترین سود",
+                    title = strings.topWinner,
                     value = if (topWinner != null && topWinner.netProfitLoss > 0)
                         "${topWinner.name} (+${formatNumber(topWinner.netProfitLoss)})"
-                    else "بدون سود",
+                    else strings.noProfit,
                     icon = Icons.Default.EmojiEvents,
                     iconColor = ProfitGreen,
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
-                    title = "تعداد بازیکنان",
-                    value = "${state.players.size} نفر",
+                    title = strings.playerCountLabel,
+                    value = "${state.players.size} ${if (strings.languageCode == "en") "Players" else "نفر"}",
                     icon = Icons.Default.People,
                     iconColor = Color(0xFFCE93D8),
                     modifier = Modifier.weight(1f)
@@ -197,7 +199,7 @@ fun AnalyticsScreen(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "دفترچه ثبت مبالغ دست‌های بازی شده (${state.handHistory.size} دست)",
+                    text = "${strings.handLedgerTitle} (${state.handHistory.size} ${if (strings.languageCode == "en") "Hands" else "دست"})",
                     style = MaterialTheme.typography.titleMedium.copy(
                         color = GoldLight,
                         fontWeight = FontWeight.Bold,
@@ -220,7 +222,7 @@ fun AnalyticsScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "هنوز دستی به پایان نرسیده است. پس از پایان اولین دست، گزارش ورودی و خروجی دقیق هر شخص در اینجا ثبت می‌شود.",
+                        text = strings.noHandsPlayedYet,
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = Color.White.copy(alpha = 0.6f),
                             fontSize = 12.sp
@@ -292,6 +294,7 @@ fun HandHistoryCard(
     players: List<Player>,
     currencySymbol: String
 ) {
+    val strings = LocalAppStrings.current
     var isExpanded by remember { mutableStateOf(false) }
     val dateFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.getDefault()) }
     val timeString = dateFormat.format(Date(hand.timestamp))
@@ -320,7 +323,7 @@ fun HandHistoryCard(
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "دست #${hand.handNumber}",
+                        text = "${strings.handNumber} #${hand.handNumber}",
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = GoldLight,
                             fontWeight = FontWeight.Bold
@@ -339,7 +342,7 @@ fun HandHistoryCard(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "مجموع پات: ${formatNumber(hand.totalPot)} $currencySymbol",
+                    text = "${strings.totalPotLabel}: ${formatNumber(hand.totalPot)} $currencySymbol",
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = GoldLight,
                         fontWeight = FontWeight.Bold,
@@ -380,7 +383,7 @@ fun HandHistoryCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = "تغییر چیپ بازیکنان در این دست:",
+                    text = strings.playerChipChanges,
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = Color.White.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Bold,
@@ -389,7 +392,7 @@ fun HandHistoryCard(
                 )
 
                 hand.playerChipDeltas.forEach { (playerId, delta) ->
-                    val playerName = players.firstOrNull { it.id == playerId }?.name ?: "بازیکن"
+                    val playerName = players.firstOrNull { it.id == playerId }?.name ?: if (strings.languageCode == "en") "Player" else "بازیکن"
                     val isGain = delta > 0
                     val isLoss = delta < 0
 

@@ -67,6 +67,7 @@ import com.example.poker.ui.components.RestartGameDialog
 import com.example.poker.ui.components.SettingsDialog
 import com.example.poker.ui.components.ShowdownDialog
 import com.example.poker.ui.components.TemplatesDialog
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.poker.viewmodel.PokerViewModel
 import com.example.ui.theme.BackgroundDark
 import com.example.ui.theme.FeltBorder
@@ -85,6 +86,7 @@ fun TableScreen(
     viewModel: PokerViewModel,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     val state by viewModel.uiState.collectAsState()
     val templates by viewModel.templates.collectAsState()
     val userMessage by viewModel.userMessage.collectAsState()
@@ -152,7 +154,7 @@ fun TableScreen(
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            text = "دست #${state.handNumber}",
+                            text = "${strings.handNumber} #${state.handNumber}",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 color = GoldLight,
                                 fontWeight = FontWeight.Bold
@@ -175,7 +177,7 @@ fun TableScreen(
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            text = state.currentStreet.faName,
+                            text = state.currentStreet.getName(strings.languageCode),
                             style = MaterialTheme.typography.labelMedium.copy(
                                 color = if (isHandActive) ProfitGreen else GoldLight,
                                 fontWeight = FontWeight.ExtraBold
@@ -196,7 +198,7 @@ fun TableScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.RestartAlt,
-                            contentDescription = "ری‌استارت بازی",
+                            contentDescription = strings.restartBtn,
                             tint = LossRed.copy(alpha = 0.9f),
                             modifier = Modifier.size(20.dp)
                         )
@@ -214,7 +216,7 @@ fun TableScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Bookmarks,
-                            contentDescription = "تمپلیت‌های بازی",
+                            contentDescription = strings.templatesTitle,
                             tint = GoldPrimary,
                             modifier = Modifier.size(19.dp)
                         )
@@ -230,7 +232,7 @@ fun TableScreen(
                             .background(SurfaceElevated)
                             .testTag("add_player_icon_button")
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Player", tint = GoldLight, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Add, contentDescription = strings.addPlayerTitle, tint = GoldLight, modifier = Modifier.size(20.dp))
                     }
 
                     Spacer(modifier = Modifier.width(6.dp))
@@ -243,7 +245,7 @@ fun TableScreen(
                             .background(SurfaceElevated)
                             .testTag("settings_icon_button")
                     ) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.Settings, contentDescription = strings.settingsTitle, tint = Color.White, modifier = Modifier.size(18.dp))
                     }
                 }
             }
@@ -256,14 +258,14 @@ fun TableScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "بلایندها: ${state.settings.smallBlind} / ${state.settings.bigBlind} ${state.settings.currencyName}",
+                    text = strings.blindsLabel(state.settings.smallBlind, state.settings.bigBlind, state.settings.currencyName),
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 11.sp
                     )
                 )
                 Text(
-                    text = "بازیکنان با چیپ: ${state.players.count { it.chips > 0 }}",
+                    text = "${strings.playersWithChips}: ${state.players.count { it.chips > 0 }}",
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 11.sp
@@ -328,7 +330,7 @@ fun TableScreen(
                                 Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black)
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "شروع دست جدید",
+                                    text = strings.startNewHand,
                                     color = Color.Black,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp
@@ -348,7 +350,7 @@ fun TableScreen(
                             ) {
                                 Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("ری‌استارت", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text(strings.restartBtn, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                         }
                     } else {
@@ -364,7 +366,7 @@ fun TableScreen(
                             Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black)
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "شروع اولین دست",
+                                text = strings.startFirstHand,
                                 color = Color.Black,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp

@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.poker.model.Player
 import com.example.poker.model.Pot
+import com.example.poker.ui.i18n.LocalAppStrings
 import com.example.ui.theme.FeltCard
 import com.example.ui.theme.GoldDark
 import com.example.ui.theme.GoldLight
@@ -48,8 +49,8 @@ fun PotsDisplay(
     modifier: Modifier = Modifier,
     currencySymbol: String = "چیپ"
 ) {
+    val strings = LocalAppStrings.current
     val totalInAllPots = pots.sumOf { it.amount }
-    val mainPot = pots.firstOrNull()
     val sidePots = if (pots.size > 1) pots.drop(1) else emptyList()
 
     Column(
@@ -90,7 +91,7 @@ fun PotsDisplay(
             Spacer(modifier = Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "مجموع پات میز",
+                    text = strings.totalTablePot,
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = Color.White.copy(alpha = 0.7f),
                         fontSize = 11.sp
@@ -119,7 +120,7 @@ fun PotsDisplay(
                     .padding(top = 10.dp)
             ) {
                 Text(
-                    text = "پات‌های ایجاد شده (${pots.size} پات خودکار):",
+                    text = "${if (strings.languageCode == "en") "Pots Created" else "پات‌های ایجاد شده"} (${pots.size}):",
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = GoldPrimary,
                         fontWeight = FontWeight.Bold,
@@ -155,8 +156,16 @@ fun SinglePotBadge(
     isMain: Boolean,
     currencySymbol: String
 ) {
+    val strings = LocalAppStrings.current
     val eligibleNames = pot.eligiblePlayerIds.mapNotNull { id ->
         players.firstOrNull { it.id == id }?.name
+    }
+
+    val displayPotName = if (strings.languageCode == "en") {
+        if (pot.name.contains("اصلی") || pot.name.contains("Main")) "Main Pot"
+        else pot.name.replace("پات جانبی", "Side Pot").replace("پات اصلی", "Main Pot")
+    } else {
+        pot.name
     }
 
     Column(
@@ -172,7 +181,7 @@ fun SinglePotBadge(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = pot.name,
+                text = displayPotName,
                 style = MaterialTheme.typography.labelSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = if (isMain) GoldLight else Color(0xFF90CAF9),
@@ -191,7 +200,7 @@ fun SinglePotBadge(
         }
         Spacer(modifier = Modifier.height(2.dp))
         Text(
-            text = "واجد شرایط: ${eligibleNames.joinToString(", ")}",
+            text = "${if (strings.languageCode == "en") "Eligible" else "واجد شرایط"}: ${eligibleNames.joinToString(", ")}",
             style = MaterialTheme.typography.bodySmall.copy(
                 color = Color.White.copy(alpha = 0.65f),
                 fontSize = 9.sp

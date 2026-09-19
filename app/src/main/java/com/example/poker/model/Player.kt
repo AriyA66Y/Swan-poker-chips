@@ -2,11 +2,13 @@ package com.example.poker.model
 
 import java.util.UUID
 
-enum class PlayerHandStatus(val faTitle: String) {
-    ACTIVE("فعال"),
-    FOLDED("فولد شده"),
-    ALL_IN("آل‌این"),
-    SITTING_OUT("خارج از بازی")
+enum class PlayerHandStatus(val faTitle: String, val enTitle: String) {
+    ACTIVE("فعال", "Active"),
+    FOLDED("فولد شده", "Folded"),
+    ALL_IN("آل‌این", "All-In"),
+    SITTING_OUT("خارج از بازی", "Sitting Out");
+
+    fun getTitle(lang: String): String = if (lang == "en") enTitle else faTitle
 }
 
 data class Player(

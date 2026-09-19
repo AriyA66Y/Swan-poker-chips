@@ -5,5 +5,6 @@ data class GameSettings(
     val bigBlind: Long = 20L,
     val ante: Long = 0L,
     val autoPostBlinds: Boolean = true,
-    val currencyName: String = "چیپ"
+    val currencyName: String = "چیپ",
+    val language: String = "fa" // "fa" or "en"
 )

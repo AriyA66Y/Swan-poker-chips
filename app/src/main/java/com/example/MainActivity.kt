@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,6 +40,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
+import com.example.poker.ui.i18n.LocalAppStrings
+import com.example.poker.ui.i18n.getAppStrings
 import com.example.poker.ui.screens.AnalyticsScreen
 import com.example.poker.ui.screens.PlayersScreen
 import com.example.poker.ui.screens.TableScreen
@@ -51,14 +54,13 @@ import com.example.ui.theme.MyApplicationTheme
 import com.example.ui.theme.SurfaceDark
 
 enum class PokerTab(
-    val title: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
     val testTag: String
 ) {
-    TABLE("میز بازی", Icons.Filled.Casino, Icons.Outlined.Casino, "nav_table_tab"),
-    ANALYTICS("سود و زیان", Icons.Filled.Analytics, Icons.Outlined.Analytics, "nav_analytics_tab"),
-    PLAYERS("بازیکنان", Icons.Filled.Group, Icons.Outlined.Group, "nav_players_tab")
+    TABLE(Icons.Filled.Casino, Icons.Outlined.Casino, "nav_table_tab"),
+    ANALYTICS(Icons.Filled.Analytics, Icons.Outlined.Analytics, "nav_analytics_tab"),
+    PLAYERS(Icons.Filled.Group, Icons.Outlined.Group, "nav_players_tab")
 }
 
 class MainActivity : ComponentActivity() {
@@ -68,8 +70,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val state by viewModel.uiState.collectAsState()
+            val isEnglish = (state.settings.language == "en")
+            val layoutDirection = if (isEnglish) LayoutDirection.Ltr else LayoutDirection.Rtl
+            val appStrings = getAppStrings(state.settings.language)
+
             MyApplicationTheme {
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                CompositionLocalProvider(
+                    LocalLayoutDirection provides layoutDirection,
+                    LocalAppStrings provides appStrings
+                ) {
                     PokerApp(viewModel = viewModel)
                 }
             }
@@ -82,6 +92,7 @@ fun PokerApp(
     viewModel: PokerViewModel,
     modifier: Modifier = Modifier
 ) {
+    val strings = LocalAppStrings.current
     var currentTab by rememberSaveable { mutableStateOf(PokerTab.TABLE) }
 
     Scaffold(
@@ -98,18 +109,23 @@ fun PokerApp(
             ) {
                 PokerTab.entries.forEach { tab ->
                     val isSelected = (currentTab == tab)
+                    val tabTitle = when (tab) {
+                        PokerTab.TABLE -> strings.navTable
+                        PokerTab.ANALYTICS -> strings.navAnalytics
+                        PokerTab.PLAYERS -> strings.navPlayers
+                    }
                     NavigationBarItem(
                         selected = isSelected,
                         onClick = { currentTab = tab },
                         icon = {
                             Icon(
                                 imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
-                                contentDescription = tab.title
+                                contentDescription = tabTitle
                             )
                         },
                         label = {
                             Text(
-                                text = tab.title,
+                                text = tabTitle,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 fontSize = 11.sp
                             )

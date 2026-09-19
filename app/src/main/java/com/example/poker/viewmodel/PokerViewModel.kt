@@ -196,6 +196,13 @@ class PokerViewModel(
         _uiState.update { it.copy(settings = newSettings) }
     }
 
+    fun setLanguage(lang: String) {
+        _uiState.update { state ->
+            val updated = state.settings.copy(language = lang)
+            state.copy(settings = updated)
+        }
+    }
+
     // -------------------------------------------------------------
     // HAND MANAGEMENT
     // -------------------------------------------------------------
