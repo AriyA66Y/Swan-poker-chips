@@ -22,9 +22,24 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Generate Debug Keystore
+      # بازسازی فایل کی‌استور ثابت از سکرت‌های گیت‌هاب
+      - name: Decode Keystore
+        env:
+          KEYSTORE_DATA: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          if [ -n "$KEYSTORE_DATA" ]; then
+            echo "$KEYSTORE_DATA" | base64 -d > debug.keystore
+          else
+            # فال‌بک در صورتی که سکرت هنوز تعریف نشده باشه
+            keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      # بالا بردن اتوماتیک شماره نسخه
+      - name: Auto Bump Version
+        run: |
+          BUILD_NUM=${{ github.run_number }}
+          sed -i -E "s/versionCode([ =]+)[0-9]+/versionCode\1$BUILD_NUM/" app/build.gradle.kts || true
+          sed -i -E "s/versionName([ =]+)\"[^\"]+\"/versionName\1\"1.0.$BUILD_NUM\"/" app/build.gradle.kts || true
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -42,8 +57,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "v1.0.${{ github.run_number }}"
-          name: "Build #${{ github.run_number }}"
-          body: "خروجی خودکار فایل APK نسخه دیباگ"
+          name: "نسخه 1.0.${{ github.run_number }}"
+          body: "version ${{ github.run_number }}"
           draft: false
           prerelease: false
           files: app/build/outputs/apk/debug/*.apk
