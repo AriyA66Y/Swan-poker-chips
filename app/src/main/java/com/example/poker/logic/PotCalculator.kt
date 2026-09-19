@@ -85,6 +85,7 @@ object PotCalculator {
                 return Pair(
                     listOf(
                         Pot(
+                            id = "pot_0",
                             name = "پات اصلی (Main Pot)",
                             amount = totalInPot,
                             eligiblePlayerIds = listOf(singleWinner.id)
@@ -115,6 +116,7 @@ object PotCalculator {
                 "ساید پات $index (Side Pot $index)"
             }
             Pot(
+                id = "pot_$index",
                 name = name,
                 amount = slice.amount,
                 eligiblePlayerIds = slice.eligiblePlayerIds

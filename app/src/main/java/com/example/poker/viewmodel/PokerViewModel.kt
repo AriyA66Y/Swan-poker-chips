@@ -326,9 +326,17 @@ class PokerViewModel : ViewModel() {
             val deltas = mutableMapOf<String, Long>()
             for (p in finalPlayers) {
                 val orig = state.players.firstOrNull { it.id == p.id }
-                if (orig != null) {
-                    deltas[p.id] = p.chips - orig.chips
-                }
+                val handStartChips = (orig?.chips ?: p.chips) + (orig?.totalHandContributed ?: 0L)
+                deltas[p.id] = p.chips - handStartChips
+            }
+
+            val cleanedPlayers = finalPlayers.map { p ->
+                p.copy(
+                    currentStreetBet = 0L,
+                    totalHandContributed = 0L,
+                    status = if (p.chips > 0) PlayerHandStatus.ACTIVE else PlayerHandStatus.SITTING_OUT,
+                    hasActedThisRound = false
+                )
             }
 
             val summary = "${singleWinner.name} به دلیل فولد بقیه بازیکنان برنده شد (${totalWon} چیپ)"
@@ -343,12 +351,12 @@ class PokerViewModel : ViewModel() {
 
             _uiState.update {
                 it.copy(
-                    players = finalPlayers,
+                    players = cleanedPlayers,
                     currentStreet = Street.ENDED,
                     currentTurnPlayerId = null,
                     actionLogs = it.actionLogs + action,
                     handHistory = it.handHistory + handResult,
-                    pots = calculatedPots,
+                    pots = emptyList(),
                     isAutoHandOver = true,
                     lastHandSummary = summary
                 )
@@ -650,7 +658,9 @@ class PokerViewModel : ViewModel() {
 
     fun awardPots(potWinnersMap: Map<String, List<String>>) {
         val state = _uiState.value
-        val (currentPots, refunds) = PotCalculator.calculatePots(state.players)
+        // If state.pots is available, use it because its IDs match what was shown in ShowdownDialog!
+        val (calcPots, refunds) = PotCalculator.calculatePots(state.players)
+        val currentPots = if (state.pots.isNotEmpty()) state.pots else calcPots
 
         val updatedPlayers = state.players.map { p ->
             val refund = refunds[p.id] ?: 0L
@@ -659,8 +669,16 @@ class PokerViewModel : ViewModel() {
 
         val summaries = mutableListOf<String>()
 
-        val awardedPots = currentPots.map { pot ->
-            val winners = potWinnersMap[pot.id] ?: emptyList()
+        val awardedPots = currentPots.mapIndexed { index, pot ->
+            // Match winner list:
+            // 1. Exact pot.id
+            // 2. Deterministic key "pot_$index"
+            // 3. Positional fallback from the map values
+            val winners = potWinnersMap[pot.id]
+                ?: potWinnersMap["pot_$index"]
+                ?: potWinnersMap.values.elementAtOrNull(index)
+                ?: emptyList()
+
             if (winners.isNotEmpty()) {
                 val payouts = PotCalculator.splitPot(pot.amount, winners)
                 payouts.forEach { (winnerId, amount) ->
@@ -671,7 +689,7 @@ class PokerViewModel : ViewModel() {
                     }
                 }
                 val winnerNames = winners.mapNotNull { wid -> updatedPlayers.firstOrNull { it.id == wid }?.name }
-                summaries.add("${pot.name}: برنده ${winnerNames.joinToString(", ")} (${pot.amount} چیپ)")
+                summaries.add("${pot.name}: برنده ${winnerNames.joinToString("، ")} (${pot.amount} چیپ)")
             }
             pot.copy(winners = winners)
         }
@@ -679,9 +697,19 @@ class PokerViewModel : ViewModel() {
         // Calculate deltas for this hand
         val deltas = mutableMapOf<String, Long>()
         for (p in updatedPlayers) {
-            val initialChips = state.players.firstOrNull { it.id == p.id }?.chips ?: p.chips
-            // Note: the player already had contributed deducted from their stack, so delta is final - initial
-            deltas[p.id] = p.chips - initialChips
+            val orig = state.players.firstOrNull { it.id == p.id }
+            val handStartChips = (orig?.chips ?: p.chips) + (orig?.totalHandContributed ?: 0L)
+            deltas[p.id] = p.chips - handStartChips
+        }
+
+        // Clean up player betting state for hand conclusion
+        val finalPlayers = updatedPlayers.map { p ->
+            p.copy(
+                currentStreetBet = 0L,
+                totalHandContributed = 0L,
+                status = if (p.chips > 0) PlayerHandStatus.ACTIVE else PlayerHandStatus.SITTING_OUT,
+                hasActedThisRound = false
+            )
         }
 
         val fullSummary = summaries.joinToString(" | ")
@@ -696,10 +724,10 @@ class PokerViewModel : ViewModel() {
 
         _uiState.update {
             it.copy(
-                players = updatedPlayers,
+                players = finalPlayers,
                 currentStreet = Street.ENDED,
                 currentTurnPlayerId = null,
-                pots = awardedPots,
+                pots = emptyList(),
                 handHistory = it.handHistory + handResult,
                 isShowdownModalOpen = false,
                 lastHandSummary = fullSummary

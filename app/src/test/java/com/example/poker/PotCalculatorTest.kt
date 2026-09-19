@@ -72,4 +72,27 @@ class PotCalculatorTest {
         assertEquals(250L, pots[0].amount)
         assertEquals(listOf("2", "3"), pots[0].eligiblePlayerIds)
     }
+
+    @Test
+    fun testDeterministicPotIds() {
+        val p1 = Player(id = "1", name = "Ali", seatIndex = 0, chips = 0, totalBuyIn = 50, totalHandContributed = 50, status = PlayerHandStatus.ALL_IN)
+        val p2 = Player(id = "2", name = "Reza", seatIndex = 1, chips = 0, totalBuyIn = 150, totalHandContributed = 150, status = PlayerHandStatus.ALL_IN)
+        val p3 = Player(id = "3", name = "Sara", seatIndex = 2, chips = 350, totalBuyIn = 500, totalHandContributed = 150, status = PlayerHandStatus.ACTIVE)
+
+        val (pots, _) = PotCalculator.calculatePots(listOf(p1, p2, p3))
+        assertEquals(2, pots.size)
+        assertEquals("pot_0", pots[0].id)
+        assertEquals("pot_1", pots[1].id)
+    }
+
+    @Test
+    fun testSplitPotDistribution() {
+        val payouts = PotCalculator.splitPot(300L, listOf("1", "2"))
+        assertEquals(150L, payouts["1"])
+        assertEquals(150L, payouts["2"])
+
+        // Odd amount split: 101 split between 2 players gives 51 and 50
+        val oddPayouts = PotCalculator.splitPot(101L, listOf("1", "2"))
+        assertEquals(101L, (oddPayouts["1"] ?: 0L) + (oddPayouts["2"] ?: 0L))
+    }
 }
